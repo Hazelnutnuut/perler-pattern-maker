@@ -5,6 +5,26 @@ Turn any image into a Perler / fuse-bead pattern with **MARD 221 standard colour
 
 **在线使用 / Try it:** https://hazelnutnuut.github.io/perler-pattern-maker/
 
+## 为什么做这个 · Why
+
+以前从一张图做出拼豆图纸，要在好几个软件之间来回倒腾。这个工具想把整件事放进一个页面里：
+
+1. **不用再在多个软件之间切换**
+   以前要先在修图软件里把图片缩小、像素化，再拿到另一个工具里对色号。现在上传图片后直接出带色号的图纸。
+2. **尺寸自己定，难度自己选**
+   格数越多，图越精细，但也越难拼、越花时间。用户可以输入任意宽高，按自己的时间和精力选择难度：几十格的小挂件，或者上百格的大作品。
+3. **自带抠图，背景不再被算进去**
+   很多拼豆图纸生成工具会把背景也转成豆子，用户只能先去抠图软件里处理，或者事后一颗颗删。这里上传时会直接问要不要去背景：纯色背景一键去掉，照片和复杂背景可以用 AI 抠图。
+4. **一体化工作流**
+   上传 → 抠图 → 裁剪 → 定尺寸 → 匹配标准色号 → 手动修图 → 导出图纸和用量表，全部在一个页面完成，图片也不会离开你的浏览器。
+
+Making a bead pattern from a picture used to mean juggling several apps. This tool puts the whole job on one page:
+
+1. **No more app-hopping** — no need to shrink and pixelate the image in a photo editor first and then match colours in another tool. Upload, and get a chart with colour codes.
+2. **You pick the size, so you pick the difficulty** — more beads means more detail but more time and effort. Enter any width and height to match how much time you have, from a small charm to a large piece.
+3. **Built-in background removal** — many pattern generators turn the background into beads too, so you have to cut the subject out in another app or delete beads one by one afterwards. Here you're asked right after upload: remove a solid background in one click, or use AI cutout for photos and busy backgrounds.
+4. **One end-to-end workflow** — upload → cut out → crop → size → match standard codes → touch up → export the chart and bead counts, all in one page, and your image never leaves your browser.
+
 ![screenshot](docs/screenshot.png)
 
 **效果示例 / Examples**（原图 → 32 颗宽的拼豆效果 / original → 32-bead-wide result）
