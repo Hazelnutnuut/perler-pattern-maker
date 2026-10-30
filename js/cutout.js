@@ -12,15 +12,24 @@ export const CUTOUT_MODELS = {
 };
 
 let tfPromise = null;
-const loaded = {};
+const loaded = {};   // kind -> { model, processor, step }
 
-async function loadModel(kind, onProgress) {
+// Ordered fallbacks: fast GPU first; if the GPU kernel fails (some drivers do), go full precision, then CPU.
+function attempts(kind) {
+  const list = [];
+  if ('gpu' in navigator) {
+    if (kind === 'general') list.push({ device: 'webgpu', dtype: 'fp16' });
+    list.push({ device: 'webgpu', dtype: 'fp32' });
+  }
+  list.push({ device: 'wasm', dtype: 'fp32' });
+  return list;
+}
+
+async function loadModel(kind, from, onProgress) {
   const cfg = CUTOUT_MODELS[kind];
-  if (loaded[kind]) return loaded[kind];
   tfPromise ??= import(/* @vite-ignore */ TF_URL);
   const tf = await tfPromise;
   tf.env.allowLocalModels = false;
-
   const files = new Map();
   const progress_callback = p => {
     if (p.status === 'progress' && p.total) {
@@ -30,19 +39,16 @@ async function loadModel(kind, onProgress) {
       onProgress?.({ phase: 'download', ratio: t ? l / t : 0, mb: t / 1048576 });
     }
   };
-  const tries = [];
-  if ('gpu' in navigator) tries.push({ device: 'webgpu', dtype: kind === 'general' ? 'fp16' : 'fp32' }, { device: 'webgpu', dtype: 'fp32' });
-  tries.push({ device: 'wasm', dtype: 'fp32' });
-
-  let model = null, lastErr = null;
-  for (const opt of tries) {
-    try { model = await tf.AutoModel.from_pretrained(cfg.id, { ...opt, progress_callback }); break; }
-    catch (e) { lastErr = e; console.warn('cutout: load failed with', opt, e); }
+  const list = attempts(kind);
+  let lastErr = null;
+  for (let step = from; step < list.length; step++) {
+    try {
+      const model = await tf.AutoModel.from_pretrained(cfg.id, { ...list[step], progress_callback });
+      const processor = await tf.AutoProcessor.from_pretrained(cfg.id);
+      return (loaded[kind] = { tf, model, processor, cfg, step, last: step === list.length - 1 });
+    } catch (e) { lastErr = e; console.warn('cutout: load failed with', list[step], e); }
   }
-  if (!model) throw lastErr;
-  const processor = await tf.AutoProcessor.from_pretrained(cfg.id);
-  loaded[kind] = { tf, model, processor, cfg };
-  return loaded[kind];
+  throw lastErr;
 }
 
 /**
@@ -51,8 +57,22 @@ async function loadModel(kind, onProgress) {
  * @param {'portrait'|'general'} kind
  */
 export async function removeBackground(img, kind, onProgress) {
-  const { tf, model, processor, cfg } = await loadModel(kind, onProgress);
-  onProgress?.({ phase: 'infer' });
+  let m = loaded[kind] || await loadModel(kind, 0, onProgress);
+  for (;;) {
+    try {
+      onProgress?.({ phase: 'infer' });
+      return await runModel(m, img);
+    } catch (e) {
+      console.warn('cutout: inference failed with', attempts(kind)[m.step], e);
+      if (m.last) throw e;
+      try { await m.model.dispose?.(); } catch { /* ignore */ }
+      delete loaded[kind];
+      m = await loadModel(kind, m.step + 1, onProgress);
+    }
+  }
+}
+
+async function runModel({ tf, model, processor, cfg }, img) {
   const raw = new tf.RawImage(new Uint8ClampedArray(img.data), img.width, img.height, 4).rgb();
   const { pixel_values } = await processor(raw);
   const out = await model({ [cfg.input]: pixel_values });
