@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>拼豆图纸生成器 · Perler Pattern Maker</title>
+  <meta name="description" content="图片一键转拼豆图纸，MARD 标准色号，自定义尺寸，可手动修图，导出带色号的图纸。Turn images into Perler bead patterns with MARD color codes.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='9' cy='9' r='7' fill='%23ff5c9d'/><circle cx='23' cy='9' r='7' fill='%23ffd23f'/><circle cx='9' cy='23' r='7' fill='%2335c4ff'/><circle cx='23' cy='23' r='7' fill='%237be37b'/><g fill='white'><circle cx='9' cy='9' r='2.4'/><circle cx='23' cy='9' r='2.4'/><circle cx='9' cy='23' r='2.4'/><circle cx='23' cy='23' r='2.4'/></g></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div>
+        <h1 data-i18n="appTitle">拼豆图纸生成器</h1>
+        <p data-i18n="appSub"></p>
+      </div>
+    </div>
+    <button id="langBtn" class="ghost" data-i18n="langBtn">English</button>
+  </header>
+
+  <main class="layout">
+    <aside class="side">
+      <section class="card">
+        <h2 data-i18n="step1"></h2>
+        <label id="drop" class="drop">
+          <input id="file" type="file" accept="image/*" hidden>
+                    <span class="drop-text">
+            <strong data-i18n="dropHint"></strong>
+            <small data-i18n="dropSub"></small>
+          </span>
+        </label>
+        <div id="cropWrap" class="crop" hidden>
+          <div class="crop-head"><span data-i18n="cropTitle"></span>
+            <span><button id="autoTrim" type="button" data-i18n="autoTrim"></button>
+            <button id="resetCrop" type="button" data-i18n="resetCrop"></button></span></div>
+          <canvas id="cropCv"></canvas>
+          <small data-i18n="cropHint"></small>
+        </div>
+        <p class="tip" data-i18n="tipCartoon"></p>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="step2"></h2>
+        <div class="row2">
+          <label class="field"><span data-i18n="width"></span><input id="w" type="number" min="5" max="200" value="40"></label>
+          <label class="field"><span data-i18n="height"></span><input id="h" type="number" min="5" max="200" value="40"></label>
+        </div>
+        <label class="check"><input id="lock" type="checkbox" checked><span data-i18n="lockRatio"></span></label>
+        <div class="field"><span data-i18n="presets"></span>
+          <div class="chips" id="presets">
+            <button data-s="29">29×29</button><button data-s="40">40×40</button>
+            <button data-s="52">52×52</button><button data-s="58">58×58</button>
+          </div>
+        </div>
+        <label class="field"><span data-i18n="palette"></span>
+          <select id="palette"></select>
+        </label>
+        <label class="field"><span><span data-i18n="maxColors"></span> <b id="maxOut"></b></span>
+          <input id="max" type="range" min="2" max="61" value="24">
+        </label>
+        <label class="field"><span><span data-i18n="merge"></span> <b id="mergeOut"></b></span>
+          <input id="merge" type="range" min="0" max="20" value="7">
+          <small class="hint" data-i18n="mergeHint"></small>
+        </label>
+        <label class="field"><span data-i18n="sampling"></span>
+          <select id="sampling">
+            <option value="dominant" data-i18n="samplingDominant"></option>
+            <option value="average" data-i18n="samplingAverage"></option>
+          </select>
+        </label>
+        <label class="check"><input id="bg" type="checkbox" checked><span data-i18n="removeBg"></span></label>
+        <label class="field sub"><span><span data-i18n="bgTol"></span> <b id="tolOut"></b></span>
+          <input id="tol" type="range" min="1" max="30" value="8">
+        </label>
+        <label class="check"><input id="noise" type="checkbox"><span data-i18n="cleanNoise"></span></label>
+        <label class="field"><span data-i18n="board"></span>
+          <select id="board">
+            <option value="0" data-i18n="boardNone"></option>
+            <option value="29">29 × 29</option>
+            <option value="52">52 × 52</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="step4"></h2>
+        <label class="field"><span data-i18n="title"></span><input id="title" type="text" data-i18n-ph="titlePh"></label>
+        <div class="btns">
+          <button id="dlChart" class="primary" data-i18n="dlChart"></button>
+          <button id="dlPreview" data-i18n="dlPreview"></button>
+          <button id="print" data-i18n="print"></button>
+          <button id="dlCsv" data-i18n="dlCsv"></button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="work">
+      <div class="card toolbar">
+        <h2 data-i18n="step3"></h2>
+        <div class="tools" id="tools">
+          <button data-tool="paint" class="on" data-i18n="toolPaint"></button>
+          <button data-tool="erase" data-i18n="toolErase"></button>
+          <button data-tool="pick" data-i18n="toolPick"></button>
+          <button data-tool="fill" data-i18n="toolFill"></button>
+          <button data-tool="replace" data-i18n="toolReplace" data-i18n-title="toolReplaceHint"></button>
+          <span class="sep"></span>
+          <button id="undo" data-i18n="undo"></button>
+          <button id="redo" data-i18n="redo"></button>
+          <button id="regen" data-i18n="reset"></button>
+        </div>
+        <div class="view">
+          <label class="mini"><span data-i18n="zoom"></span><input id="zoom" type="range" min="6" max="40" value="16"></label>
+          <label class="check"><input id="beadView" type="checkbox"><span data-i18n="viewBead"></span></label>
+          <label class="check"><input id="codes" type="checkbox" checked><span data-i18n="viewCodes"></span></label>
+          <span class="cur"><span data-i18n="current"></span> <i id="curSw"></i> <b id="curCode"></b></span>
+        </div>
+      </div>
+
+      <div class="card stage-wrap">
+        <div class="stage" id="stage">
+          <p class="empty" id="empty" data-i18n="empty"></p>
+          <canvas id="cv" hidden></canvas>
+        </div>
+        <div class="status"><span id="pos"></span><span id="stats"></span></div>
+      </div>
+
+      <div class="card">
+        <h3><span data-i18n="used"></span> <small data-i18n="usedHint"></small></h3>
+        <div class="swatches" id="used"></div>
+        <h3 class="mt"><span data-i18n="allColors"></span>
+          <input id="search" type="search" data-i18n-ph="searchColor"></h3>
+        <div class="swatches all" id="all"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot" data-i18n="footer"></footer>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
