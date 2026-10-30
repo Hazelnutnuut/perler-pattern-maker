@@ -29,7 +29,10 @@ Turn any image into a Perler / fuse-bead pattern with **MARD 221 standard colour
 - **控制颜色数**：
   - 「最多颜色数」：超过就把用量最少的颜色并入最接近的颜色。
   - 「相近色合并」：把几乎一样的颜色（比如三四种黑）合成一种，少买几种豆。
-- **自动去背景**：从图片边缘开始，把和背景色相近、并且连通的格子变成空格（不放豆），所以人物内部的白色不会被误删。
+- **抠图 / 去背景**：上传后会问你要不要去背景，三选一：
+  - 不用
+  - 去纯色背景：从图片边缘开始，把和背景色相近、并且连通的格子变成空格（不放豆），人物内部的白色不会被误删。快，适合白底卡通。
+  - **AI 抠图**：适合照片和复杂背景，在浏览器本地运行，图片不上传。两个模型：人像（[MODNet](https://huggingface.co/Xenova/modnet)，Apache-2.0，约 25MB）和通用（[BiRefNet-lite](https://huggingface.co/onnx-community/BiRefNet_lite)，MIT，人/动物/物品都行，约 100MB+）。第一次使用要下载模型，之后浏览器会缓存。有 WebGPU 的浏览器会更快。
 - **两种取色方式**：主色（适合卡通、线条清晰）／平均色（适合照片）。
 - **手动修图**：画笔、橡皮、吸管、填充、整色替换，支持撤销/重做（⌘/Ctrl+Z）。鼠标悬停在「用到的颜色」上会高亮它在图里的位置。
 - **导出**：
@@ -65,7 +68,9 @@ python3 -m http.server 8000
 - **Any size** from 5 to 200 beads per side, with aspect-ratio lock and common pegboard presets.
 - **MARD 221 standard codes**, matched with the **CIEDE2000** colour difference formula.
 - **Colour control**: cap the number of colours, and merge near-duplicate colours so you buy fewer bead types.
-- **Background removal** by flood-filling from the image border, so white areas inside the subject are kept.
+- **Background removal / cutout** — after upload you're asked whether to remove the background:
+  - *Solid background*: flood-fill from the border, so white areas inside the subject are kept. Fast; great for cartoons.
+  - *AI cutout*: for photos and busy backgrounds, running locally in the browser via [Transformers.js](https://github.com/huggingface/transformers.js). Choose *Portrait* ([MODNet](https://huggingface.co/Xenova/modnet), Apache-2.0, ~25 MB) or *General* ([BiRefNet-lite](https://huggingface.co/onnx-community/BiRefNet_lite), MIT, ~100 MB+). Models download once and are cached; WebGPU is used when available.
 - **Two sampling modes**: dominant colour (cartoons) or average colour (photos).
 - **Editor**: paint, erase, eyedropper, fill, replace-all, undo/redo. Hover a used colour to highlight where it is.
 - **Export**: chart PNG (code in every cell, coordinates, 5/10 guides, bead count table), bead preview PNG, print / save as PDF, CSV.
@@ -85,6 +90,7 @@ style.css         styles
 js/palette.js     MARD 221 colour table
 js/color.js       RGB → Lab, CIEDE2000
 js/convert.js     image → bead grid (sampling, background removal, matching, colour limits, auto-trim)
+js/cutout.js      AI background removal (Transformers.js, loaded on demand)
 js/render.js      editor canvas, bead preview, printable chart
 js/i18n.js        Chinese / English strings
 js/app.js         UI wiring and editor

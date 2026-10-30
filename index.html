@@ -26,7 +26,7 @@
         <h2 data-i18n="step1"></h2>
         <label id="drop" class="drop">
           <input id="file" type="file" accept="image/*" hidden>
-                    <span class="drop-text">
+          <span class="drop-text">
             <strong data-i18n="dropHint"></strong>
             <small data-i18n="dropSub"></small>
           </span>
@@ -37,6 +37,26 @@
             <button id="resetCrop" type="button" data-i18n="resetCrop"></button></span></div>
           <canvas id="cropCv"></canvas>
           <small data-i18n="cropHint"></small>
+        </div>
+        <div id="bgAsk" class="bgask" hidden>
+          <strong data-i18n="bgAskTitle"></strong>
+          <div class="bg-opts" id="bgOpts">
+            <button type="button" data-bg="none" data-i18n="bgNone"></button>
+            <button type="button" data-bg="solid" data-i18n="bgSolid"></button>
+            <button type="button" data-bg="ai" data-i18n="bgAi"></button>
+          </div>
+          <div id="aiBox" class="aibox" hidden>
+            <label class="field"><span data-i18n="aiModel"></span>
+              <select id="aiModel">
+                <option value="portrait" data-i18n="aiPortrait"></option>
+                <option value="general" data-i18n="aiGeneral"></option>
+              </select>
+            </label>
+            <button type="button" id="aiRun" class="primary" data-i18n="aiRun"></button>
+            <div id="aiProg" class="prog" hidden><i></i></div>
+            <small id="aiMsg" class="hint"></small>
+          </div>
+          <small class="hint" data-i18n="bgAskHint"></small>
         </div>
         <p class="tip" data-i18n="tipCartoon"></p>
       </section>

@@ -127,3 +127,14 @@ button:disabled { opacity: .4; cursor: not-allowed; }
 
 .foot { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 16px 28px; }
 .field .hint { font-size: 11px; color: var(--muted); }
+.bgask { margin-top: 12px; display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: #f7f2ff; border: 1px solid #e6dcf7; }
+.bgask strong { font-size: 14px; }
+.bg-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.bg-opts button { padding: 6px 12px; font-size: 13px; }
+.aibox { display: grid; gap: 8px; }
+.aibox .field { margin: 0; }
+.prog { height: 8px; border-radius: 99px; background: #eadff5; overflow: hidden; }
+.prog i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ff4f93, #a86bff); transition: width .2s; }
+.prog.busy i { width: 40% !important; animation: slide 1.1s ease-in-out infinite; }
+@keyframes slide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+.crop canvas { background-color: #fff; background-image: linear-gradient(45deg,#eee 25%,transparent 25%,transparent 75%,#eee 75%),linear-gradient(45deg,#eee 25%,transparent 25%,transparent 75%,#eee 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }

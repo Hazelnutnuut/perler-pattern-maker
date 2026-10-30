@@ -11,6 +11,8 @@ const state = {
   pal: null,
   src: null,        // ImageData of the uploaded image (downscaled)
   srcCanvas: null,
+  orig: null,       // untouched copy, so a cutout can be undone
+  bgMode: 'solid',  // 'none' | 'solid' | 'ai'
   crop: null,
   aspect: 1,
   W: 40, H: 40,
@@ -57,14 +59,69 @@ function loadFile(file) {
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, c.width, c.height);
     state.src = ctx.getImageData(0, 0, c.width, c.height);
+    state.orig = state.src;
     state.srcCanvas = c;
     URL.revokeObjectURL(url);
     drop.classList.add('small');
     $('cropWrap').hidden = false;
+    $('bgAsk').hidden = false;
+    $('aiMsg').textContent = ''; $('aiProg').hidden = true;
+    setBgMode($('bg').checked ? 'solid' : 'none', false);
     setCrop(autoTrim(state.src));
   };
   img.src = url;
 }
+
+// ---------- background removal (ask the user) ----------
+function setSrc(img) {
+  state.src = img;
+  const c = state.srcCanvas;
+  c.width = img.width; c.height = img.height;
+  c.getContext('2d').putImageData(img, 0, 0);
+}
+function setBgMode(mode, regen = true) {
+  state.bgMode = mode;
+  document.querySelectorAll('#bgOpts [data-bg]').forEach(b => b.classList.toggle('on', b.dataset.bg === mode));
+  $('aiBox').hidden = mode !== 'ai';
+  $('bg').checked = mode !== 'none';
+  if (mode !== 'ai' && state.orig && state.src !== state.orig) {
+    setSrc(state.orig);
+    if (regen) { setCrop(autoTrim(state.src)); regen = false; }
+  }
+  if (regen) regenerate();
+}
+$('bgOpts').addEventListener('click', e => { const m = e.target.dataset.bg; if (m && state.orig) setBgMode(m); });
+$('bg').addEventListener('change', () => {
+  // keep the step-1 choice in sync when the checkbox is toggled directly
+  const m = $('bg').checked ? (state.src !== state.orig ? 'ai' : 'solid') : 'none';
+  document.querySelectorAll('#bgOpts [data-bg]').forEach(b => b.classList.toggle('on', b.dataset.bg === m));
+});
+
+let cutoutMod = null;
+$('aiRun').onclick = async () => {
+  if (!state.orig) return;
+  const btn = $('aiRun'), prog = $('aiProg'), bar = prog.firstElementChild, msg = $('aiMsg');
+  btn.disabled = true; prog.hidden = false; prog.classList.add('busy'); msg.textContent = t('aiLoadingLib');
+  try {
+    cutoutMod ??= await import('./cutout.js');
+    const out = await cutoutMod.removeBackground(state.orig, $('aiModel').value, p => {
+      if (p.phase === 'download') {
+        prog.classList.remove('busy'); bar.style.width = Math.round(p.ratio * 100) + '%';
+        msg.textContent = t('aiLoading', { p: Math.round(p.ratio * 100), mb: Math.round(p.mb) });
+      } else { prog.classList.add('busy'); msg.textContent = t('aiInfer'); }
+    });
+    if (state.bgMode !== 'ai') return; // user switched away meanwhile
+    setSrc(out);
+    $('bg').checked = true;
+    msg.textContent = t('aiDone');
+    setCrop(autoTrim(state.src));
+  } catch (e) {
+    console.error(e);
+    msg.textContent = t('aiFail', { e: (e && e.message) || e });
+  } finally {
+    btn.disabled = false; prog.classList.remove('busy'); prog.hidden = true; bar.style.width = '0';
+  }
+};
 
 // ---------- crop ----------
 const cropCv = $('cropCv'), cropCtx = cropCv.getContext('2d');
@@ -342,4 +399,4 @@ $('print').onclick = need(() => {
 });
 
 // expose for automated tests
-window.__ppm = { state, loadFile, regenerate, chartCanvas, setCrop };
+window.__ppm = { state, loadFile, regenerate, chartCanvas, setCrop, setSrc, setBgMode };
