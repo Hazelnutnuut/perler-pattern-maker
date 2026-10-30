@@ -25,11 +25,27 @@ function attempts(kind) {
   return list;
 }
 
+// huggingface.co is unreachable from mainland China; fall back to the hf-mirror.com mirror.
+let hostChecked = false;
+async function pickHost(tf, id) {
+  if (hostChecked) return;
+  hostChecked = true;
+  const probe = async base => {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 5000);
+    try { const r = await fetch(`${base}${id}/resolve/main/config.json`, { signal: ctl.signal }); return r.ok; }
+    catch { return false; } finally { clearTimeout(timer); }
+  };
+  if (await probe('https://huggingface.co/')) return;
+  if (await probe('https://hf-mirror.com/')) tf.env.remoteHost = 'https://hf-mirror.com/';
+}
+
 async function loadModel(kind, from, onProgress) {
   const cfg = CUTOUT_MODELS[kind];
   tfPromise ??= import(/* @vite-ignore */ TF_URL);
   const tf = await tfPromise;
   tf.env.allowLocalModels = false;
+  await pickHost(tf, cfg.id);
   const files = new Map();
   const progress_callback = p => {
     if (p.status === 'progress' && p.total) {
